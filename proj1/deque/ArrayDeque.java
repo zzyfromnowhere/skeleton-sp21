@@ -1,162 +1,182 @@
 package deque;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class ArrayDeque<Item> implements Iterable<Item>{
-    int size; //number of items
-    int length; // the maximum size of the array now
-    double ratio; // use ratio
+    private static final int INITIAL_CAPACITY = 8;
+    private static final double SHRINK_FACTOR = 0.25;
+    private static final double EXPAND_FACTOR = 1.0;
 
-    //two pointers to show the first and last position
-    int firstPos;
-    int lastPos;
+    private int size;
+    private int capacity;
+    private int first;
+    private int last;
+    private Item[] items;
 
-    Item[] items;
-
-    public ArrayDeque(){
+    public ArrayDeque() {
         this.size = 0;
-        items = (Item[])new Object[8];
-        this.length = 8;
-        this.firstPos = 0;
-        this.lastPos = 1;
+        this.capacity = INITIAL_CAPACITY;
+        this.items = (Item[]) new Object[INITIAL_CAPACITY];
+        this.first = capacity / 2;
+        this.last = first + 1;
     }
 
-    private boolean full(){
-        if(firstPos > lastPos)
-            return (firstPos - lastPos == 0);
-        return (firstPos == 0 && lastPos == length - 1);
+    private boolean isFull() {
+        return size == capacity;
     }
 
-    private double calRatio(){
-        return size / (double)(length - 2);
-    }
+    private void resize(int newCapacity) {
+        Item[] newArray = (Item[]) new Object[newCapacity];
 
-    //full or lowUtilRate is the priority of resizing
-    private void resize(int column){
-        Item[] newArr = (Item[]) new Object[column];
-        if(firstPos > lastPos){
-            System.arraycopy(items, 0, newArr, 0, lastPos);
-            System.arraycopy(items, firstPos + 1, newArr, column + firstPos - length ,length - firstPos - 1);
+        if (first < last) {
+            System.arraycopy(items, first + 1, newArray, 1, size);
+        } else {
+            int firstPart = capacity - first - 1;
+            System.arraycopy(items, first + 1, newArray, 1, firstPart);
+            System.arraycopy(items, 0, newArray, firstPart + 1, size - firstPart);
         }
-        else
-            System.arraycopy(items, 0, newArr, 0, length);
-        length = column;
+
+        this.items = newArray;
+        this.capacity = newCapacity;
+        this.first = 0;
+        this.last = size + 1;
     }
 
-    public void addFirst(Item i){
-        if(full()) resize(length * 2);
-        if(firstPos == 0){
-            firstPos = length - 1;
-            items[0] = i;
+    public void addFirst(Item item) {
+        if (item == null) {
+            throw new IllegalArgumentException("Cannot add null to deque");
         }
-        else items[firstPos--] = i;
+
+        if (isFull()) {
+            resize(capacity * 2);
+        }
+
+        items[first] = item;
+        first = (first - 1 + capacity) % capacity;
         size++;
     }
 
-    public void addLast(Item i){
-        if(full()) resize(length * 2);
-        if(lastPos == length - 1){
-            lastPos = 0;
-            items[length -1] = i;
+    public void addLast(Item item) {
+        if (item == null) {
+            throw new IllegalArgumentException("Cannot add null to deque");
         }
-        else items[lastPos ++] = i;
-        size ++;
+
+        if (isFull()) {
+            resize(capacity * 2);
+        }
+
+        items[last] = item;
+        last = (last + 1) % capacity;
+        size++;
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return size == 0;
     }
 
-    public int size(){
+    public int size() {
         return size;
     }
 
-    public void printDeque(){
-        for(Item i : this){
-            System.out.print(i.toString() + ' ');
+    public void printDeque() {
+        for (Item item : this) {
+            System.out.print(item + " ");
         }
         System.out.println();
     }
 
-    public Item removeFirst(){
-        Item r;
-        if(firstPos == length-1){
-            r = items[0];
-            items[0] = null;
-            firstPos = 0;
+    public Item removeFirst() {
+        if (isEmpty()) {
+            throw new NoSuchElementException("Deque is empty");
         }
-        else {
-            r = items[++firstPos];
-            items[firstPos] = null;
+
+        first = (first + 1) % capacity;
+        Item item = items[first];
+        items[first] = null;
+        size--;
+
+        if (capacity > INITIAL_CAPACITY && size < capacity * SHRINK_FACTOR) {
+            resize(Math.max(INITIAL_CAPACITY, capacity / 2));
         }
-        if(calRatio() < 0.25)
-            resize(length / 4 + 1);
-        return r;
+
+        return item;
     }
 
-    public Item removeLast(){
-        Item r;
-        if(lastPos == 0){
-            lastPos = length - 1;
-            r = items[lastPos];
-            items[lastPos] = null;
+    public Item removeLast() {
+        if (isEmpty()) {
+            throw new NoSuchElementException("Deque is empty");
         }
-        else{
-            r = items[--lastPos];
-            items[lastPos] = null;
+
+        last = (last - 1 + capacity) % capacity;
+        Item item = items[last];
+        items[last] = null;
+        size--;
+
+        if (capacity > INITIAL_CAPACITY && size < capacity * SHRINK_FACTOR) {
+            resize(Math.max(INITIAL_CAPACITY, capacity / 2));
         }
-        if(calRatio() < 0.25)
-            resize(length / 4 + 1);
-        return r;
+
+        return item;
     }
 
-    public Item get(int index){
-        if(index > length - 1) return null;
-        return items[(firstPos + index) % length];
-    }
-
-   public Iterator<Item> iterator(){
-        return new ArrayDequeIterator<>();
-    }
-
-   private class ArrayDequeIterator<T> implements Iterator<T>{
-        int pos;
-        public ArrayDequeIterator(){
-            int i = (firstPos == length) ? (pos = 0) : (pos = firstPos + 1);
+    public Item get(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds");
         }
-        public boolean hasNext(){
-            if(pos == length - 1){
-                return (items[0] != null);
+        return items[(first + 1 + index) % capacity];
+    }
+
+    public Iterator<Item> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<Item> {
+        private int current;
+        private int remaining;
+
+        public ArrayDequeIterator() {
+            this.current = (first + 1) % capacity;
+            this.remaining = size;
+        }
+
+        public boolean hasNext() {
+            return remaining > 0;
+        }
+
+        public Item next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
             }
-            return (items[pos++] != null);
+            Item item = items[current];
+            current = (current + 1) % capacity;
+            remaining--;
+            return item;
         }
-        public T next(){
-            if(pos == length - 1) {
-                pos = 0;
-                return (T) items[0];
-            }
-            return (T) items[pos++];
-        }
-
     }
 
-   public boolean equals(Object o){
-       if(!(o instanceof ArrayDeque)) return false;
-       if(this.size() != ((ArrayDeque<Item>) o).size()){
-            return false;
-       }
-       int index = firstPos;
-       if(index == length - 1)
-           index = 0;
-       while(index != lastPos){
-           if(!this.items[index].equals(((ArrayDeque<Item>) o).items[index])) return false;
-           if(index == length - 1){
-               index = 0;
-           }
-           else index ++;
-       }
-       return true;
-   }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ArrayDeque)) return false;
+
+        ArrayDeque<?> other = (ArrayDeque<?>) o;
+        if (this.size != other.size) return false;
+
+        Iterator<Item> thisIterator = this.iterator();
+        Iterator<?> otherIterator = other.iterator();
+
+        while (thisIterator.hasNext() && otherIterator.hasNext()) {
+            Item thisItem = thisIterator.next();
+            Object otherItem = otherIterator.next();
+
+            if (!thisItem.equals(otherItem)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
 
 
