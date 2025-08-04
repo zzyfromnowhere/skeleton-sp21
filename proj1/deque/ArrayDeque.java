@@ -88,7 +88,7 @@ public class ArrayDeque<Item> implements Iterable<Item>{
 
     public Item removeFirst() {
         if (isEmpty()) {
-            throw new NoSuchElementException("Deque is empty");
+            return null;  // Changed from throwing exception to returning null
         }
 
         first = (first + 1) % capacity;
@@ -105,7 +105,7 @@ public class ArrayDeque<Item> implements Iterable<Item>{
 
     public Item removeLast() {
         if (isEmpty()) {
-            throw new NoSuchElementException("Deque is empty");
+            return null;  // Changed from throwing exception to returning null
         }
 
         last = (last - 1 + capacity) % capacity;
