@@ -1,9 +1,10 @@
 package deque;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
+public class MaxArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
     private static final int INITIAL_CAPACITY = 8;
     private static final double SHRINK_FACTOR = 0.25;
     private static final double EXPAND_FACTOR = 1.0;
@@ -14,12 +15,41 @@ public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
     private int last;
     private Item[] items;
 
-    public ArrayDeque() {
+    private Comparator<Item> comparator;
+
+    public MaxArrayDeque() {
         this.size = 0;
         this.capacity = INITIAL_CAPACITY;
         this.items = (Item[]) new Object[INITIAL_CAPACITY];
         this.first = capacity / 2;
         this.last = first + 1;
+    }
+
+    public MaxArrayDeque(Comparator<Item> c){
+        this.size = 0;
+        this.capacity = INITIAL_CAPACITY;
+        this.items = (Item[]) new Object[INITIAL_CAPACITY];
+        this.first = capacity / 2;
+        this.last = first + 1;
+        this.comparator = c;
+    }
+
+    public Item max(){
+        if(isEmpty()) return null;
+        Item max = items[first];
+        for(Item i : this){
+            if(comparator.compare(i, max) >= 0) max = i;
+        }
+        return max;
+    }
+
+    public Item max(Comparator<Item> c){
+        if(isEmpty()) return null;
+        Item max = items[first];
+        for(Item i : this){
+            if(c.compare(i, max) >= 0) max = i;
+        }
+        return max;
     }
 
     private boolean isFull() {
@@ -58,6 +88,7 @@ public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
         size++;
     }
 
+
     @Override
     public void addLast(Item item) {
         if (item == null) {
@@ -72,7 +103,7 @@ public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
         last = (last + 1) % capacity;
         size++;
     }
-
+    
 
     @Override
     public int size() {
@@ -132,14 +163,14 @@ public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
     }
 
     public Iterator<Item> iterator() {
-        return new ArrayDequeIterator();
+        return new MaxArrayDequeIterator();
     }
 
-    private class ArrayDequeIterator implements Iterator<Item> {
+    private class MaxArrayDequeIterator<T> implements Iterator<Item> {
         private int current;
         private int remaining;
 
-        public ArrayDequeIterator() {
+        public MaxArrayDequeIterator() {
             this.current = (first + 1) % capacity;
             this.remaining = size;
         }
@@ -157,29 +188,6 @@ public class ArrayDeque<Item> implements Iterable<Item>, Deque<Item>{
             remaining--;
             return item;
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ArrayDeque)) return false;
-
-        ArrayDeque<?> other = (ArrayDeque<?>) o;
-        if (this.size != other.size) return false;
-
-        Iterator<Item> thisIterator = this.iterator();
-        Iterator<?> otherIterator = other.iterator();
-
-        while (thisIterator.hasNext() && otherIterator.hasNext()) {
-            Item thisItem = thisIterator.next();
-            Object otherItem = otherIterator.next();
-
-            if (!thisItem.equals(otherItem)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
 }
