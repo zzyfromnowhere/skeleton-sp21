@@ -5,12 +5,12 @@ import edu.princeton.cs.algs4.BST;
 import java.util.Iterator;
 import java.util.Set;
 
-public class BSTMap<K extends Comparable, V> implements Map61B<K, V> , Iterable<K> {
-    int size;
+public class BSTMap<K extends Comparable<K> , V> implements Map61B<K, V> , Iterable<K> {
+    private int size;
 
     private BSTNode<K, V> root;
 
-    private static class BSTNode<K extends Comparable, V> {
+    private static class BSTNode<K extends Comparable<K> , V> {
         BSTNode<K, V> left;
         BSTNode<K, V> right;
         K key;
@@ -62,7 +62,11 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> , Iterable<
         }
     }
 
-    public BSTNode<K, V> insert(K ik) {
+    public void printInOrder() {
+        return;
+    }
+
+    private BSTNode<K, V> insert(K ik) {
         return insert(root, ik);
     }
 
@@ -163,22 +167,7 @@ public class BSTMap<K extends Comparable, V> implements Map61B<K, V> , Iterable<
     //no requirement
     @Override
     public Iterator<K> iterator() {
-        return new BSTMapIterator<>();
-    }
-
-    //no requirement
-    private class BSTMapIterator<T> implements Iterator<T>{
-        public BSTMapIterator(){
-            throw new UnsupportedOperationException("This method has not implemented yet");
-        }
-
-        public boolean hasNext(){
-            throw new UnsupportedOperationException("This method has not implemented yet");
-        }
-
-        public T next(){
-            throw new UnsupportedOperationException("This method has not implemented yet");
-        }
+        throw new UnsupportedOperationException("This method has not implemented yet");
     }
 
 }
